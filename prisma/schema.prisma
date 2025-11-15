@@ -1,0 +1,58 @@
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String            @id @default(uuid())
+  name               String
+  email              String            @unique
+  hashed_password    String?
+  phone_number       String?
+  profile_pic        String?
+  role               Role              @default(USER)
+  profile_completion Int               @default(0)
+  is_tutorial_req    Boolean           @default(true)
+  is_email_verified  Boolean           @default(false)
+  is_phone_verified  Boolean           @default(false)
+  is_google_verified Boolean           @default(false)
+  is_deleted         Boolean           @default(false)
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
+  SocialMediaAuth    SocialMediaAuth[]
+
+  @@index([id, is_deleted], name: "user_id_is_deleted_index")
+}
+
+model SocialMediaAuth {
+  id             String   @id @default(uuid())
+  platform_type  String
+  user_id        String
+  social_user_id String?
+  access_token   String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  user           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model OtpSession {
+  session_id      String   @id @default(uuid())
+  otp             String
+  name            String?
+  email           String
+  hashed_password String
+  type            String?  @default("signup")
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}

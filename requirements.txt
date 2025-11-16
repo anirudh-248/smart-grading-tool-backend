@@ -15,7 +15,6 @@ redis
 
 sentence-transformers
 transformers
-torch==2.1.1+cpu
 pillow
 opencv-python
 google-cloud-vision

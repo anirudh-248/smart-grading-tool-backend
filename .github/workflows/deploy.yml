@@ -1,0 +1,44 @@
+name: 🚀 Deploy FastAPI App to GCP VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Connect to GCP VM and Deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ secrets.PROJECT_DIR }}
+
+            echo "🔄 Resuming FastAPI screen session..."
+
+            echo "🛑 Stopping existing Uvicorn process (Ctrl+C)..."
+            screen -r fastapi -X stuff $'\003'
+            sleep 2  # allow uvicorn to stop gracefully
+
+            echo "📦 Pulling latest changes..."
+            screen -r fastapi -X stuff "git pull origin main\n"
+
+            echo "📚 Installing dependencies..."
+            screen -r fastapi -X stuff "pip install -r requirements.txt\n"
+
+            echo "🔧 Running Prisma commands..."
+            screen -r fastapi -X stuff "prisma generate\n"
+            screen -r fastapi -X stuff "prisma db push\n"
+
+            echo "🚀 Restarting FastAPI server..."
+            screen -r fastapi -X stuff "uvicorn main:app --reload --host 127.0.0.1 --port 8000\n"
+
+            echo "✅ Deployment completed successfully."

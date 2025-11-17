@@ -15,6 +15,11 @@ except LookupError:
     logger.info("Downloading punkt")
     nltk.download('punkt')
 
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    logger.info("Downloading punkt_tab")
+    nltk.download('punkt_tab')
 
 try:
     nltk.data.find('corpora/stopwords')
@@ -26,12 +31,9 @@ except LookupError:
 def extract_keywords(text: str, num_keywords: int = None) -> List[str]:
     if not text:
         return []
-    
     num_keywords = num_keywords or cfg.get('keyword', {}).get('num_keywords', 15)
-    
     r = Rake()
     r.extract_keywords_from_text(text)
     ranked = r.get_ranked_phrases()
-    
     logger.debug(f"Extracted {len(ranked)} keywords/phrases")
     return ranked[:num_keywords]

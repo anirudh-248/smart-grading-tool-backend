@@ -23,8 +23,10 @@ def apply_rubric_to_answer(student_answer: str, rubric_for_question: Dict[str, A
         max_marks = float(rubric_for_question.get('max_marks', 0))
         if max_marks == 0:
             return 0.0
+        
         ans = (student_answer or "").lower()
         score = 0.0
+        
         expected = [k.lower() for k in rubric_for_question.get('expected_keywords', [])]
         if expected:
             found = sum(1 for kw in expected if kw in ans)
@@ -32,6 +34,7 @@ def apply_rubric_to_answer(student_answer: str, rubric_for_question: Dict[str, A
             score += keyword_fraction * max_marks * 0.7
         else:
             score += max_marks * 0.2
+
         penalties = rubric_for_question.get('penalties', {})
         words = ans.split()
         if 'length_penalty' in penalties:
@@ -41,13 +44,16 @@ def apply_rubric_to_answer(student_answer: str, rubric_for_question: Dict[str, A
             if len(words) < min_words:
                 missing = max(0, min_words - len(words))
                 score -= missing * deduct
+
         bonus_total = 0.0
         bonus = rubric_for_question.get('bonus', {})
         for k, v in bonus.items():
             if isinstance(v, (int, float)) and k in ans:
                 bonus_total += float(v)
+        
         score += bonus_total
         score = max(0.0, min(max_marks, float(score)))
+        
         logger.debug(f"Rubric score before clamp: {score} for max {max_marks}")
         return score
     except Exception:

@@ -26,9 +26,12 @@ except LookupError:
 def extract_keywords(text: str, num_keywords: int = None) -> List[str]:
     if not text:
         return []
+    
     num_keywords = num_keywords or cfg.get('keyword', {}).get('num_keywords', 15)
+    
     r = Rake()
     r.extract_keywords_from_text(text)
     ranked = r.get_ranked_phrases()
+    
     logger.debug(f"Extracted {len(ranked)} keywords/phrases")
     return ranked[:num_keywords]

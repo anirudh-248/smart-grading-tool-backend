@@ -7,6 +7,7 @@ from .logger import get_logger
 logger = get_logger(__name__)
 cfg = Config()
 
+
 _MODEL = None
 
 
@@ -26,13 +27,24 @@ def similarity_score(model_answer: str, student_answer: str) -> float:
             return 0.0
         emb_model = model.encode(model_answer, convert_to_tensor=True)
         emb_student = model.encode(student_answer, convert_to_tensor=True)
+        
         sim = util.pytorch_cos_sim(emb_model, emb_student).item()
         sim = max(0.0, min(1.0, float(sim)))
+        
         logger.debug(f"Similarity: {sim}")
         return sim
     except Exception as e:
         logger.exception("Semantic similarity failed")
         return 0.0
 
+
 def batch_similarity(model_answers: List[str], student_answers: List[str]) -> List[float]:
-    return [similarity_score(m, s) for m, s in zip(model_answers, student_answers)]
+    model = _get_model()
+    
+    emb_model = model.encode(model_answers, convert_to_tensor=True)
+    emb_student = model.encode(student_answers, convert_to_tensor=True)
+    
+    sim = util.pytorch_cos_sim(emb_model, emb_student)
+    
+    scores = sim.diag().tolist() 
+    return [max(0.0, min(1.0, float(s))) for s in scores]

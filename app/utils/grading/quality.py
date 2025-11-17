@@ -21,7 +21,11 @@ def sentiment_score(text: str) -> Dict[str, float]:
 
 
 def _language_tool_available() -> bool:
-    return False
+    try:
+        import language_tool_python
+        return True
+    except ImportError:
+        return False
 
 
 def _lt_worker(text: str, q: mp.Queue):
@@ -41,10 +45,12 @@ def grammar_issues_count(text: str) -> int:
     if not _language_tool_available():
         logger.debug("Using heuristic grammar check (LanguageTool unavailable).")
         return _heuristic_grammar_issues(text)
+    
     q: mp.Queue = mp.Queue()
     p = mp.Process(target=_lt_worker, args=(text, q))
     p.daemon = True
     start = time.time()
+    
     try:
         p.start()
         p.join(timeout=timeout_sec)
@@ -53,6 +59,7 @@ def grammar_issues_count(text: str) -> int:
             p.terminate()
             p.join(1)
             return _heuristic_grammar_issues(text)
+        
         if not q.empty():
             res = q.get()
             if "ok" in res:
@@ -65,6 +72,7 @@ def grammar_issues_count(text: str) -> int:
         else:
             logger.warning("LanguageTool returned no result; using heuristic fallback.")
             return _heuristic_grammar_issues(text)
+            
     except Exception:
         logger.exception("LanguageTool check failed unexpectedly; using heuristic fallback.")
         try:
@@ -80,6 +88,7 @@ def _heuristic_grammar_issues(text: str) -> int:
     short_fragments = sum(1 for s in sentences if len(s.strip().split()) < 3 and len(s.strip()) > 0)
     repeated_punct = len(re.findall(r'[\!\?]{2,}|\.\.{2,}', text))
     single_letter_tokens = sum(1 for tok in text.split() if len(tok) == 1)
+    
     issues = short_fragments + repeated_punct + int(single_letter_tokens / 10)
     logger.debug(f"Heuristic grammar issues: short={short_fragments}, repeated={repeated_punct}, letters={single_letter_tokens}, total={issues}")
     return int(issues)
@@ -91,9 +100,12 @@ def quality_score(text: str, max_score: float = 1.0) -> float:
     try:
         sentiment = sentiment_score(text)
         compound = sentiment.get("compound", 0.0)
+        
         issues = grammar_issues_count(text)
         penalty = min(1.0, issues * 0.05)
+        
         sentiment_factor = (compound + 1) / 2
+        
         score = max(0.0, min(max_score, (0.7 * (1 - penalty) + 0.3 * sentiment_factor) * max_score))
         logger.info(f"Computed quality score: {score:.4f} (issues={issues}, compound={compound:.3f})")
         return score

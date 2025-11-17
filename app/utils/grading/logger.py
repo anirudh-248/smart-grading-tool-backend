@@ -2,8 +2,11 @@ import logging
 from logging import Logger
 from .config import Config
 
+
+cfg = Config()
+
+
 def get_logger(name: str = "smart_grader") -> Logger:
-    cfg = Config()
     level_name = cfg.get('logging', {}).get('level', 'INFO').upper()
     level = getattr(logging, level_name, logging.INFO)
     logger = logging.getLogger(name)

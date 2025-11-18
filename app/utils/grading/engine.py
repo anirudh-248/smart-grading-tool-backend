@@ -38,14 +38,9 @@ def parse_schema(schema_text: str, max_marks: List[int] = None):
         model_answer = clean_text(match.group(1).strip()) if match else ""
         model_answers[qid] = model_answer
 
-        if max_marks and len(max_marks) >= qid:
-            mark = max_marks[qid - 1]
-        else:
-            mark = 5
-
         rubric["questions"].append({
             "question_id": qid,
-            "max_marks": mark,
+            "max_marks": max_marks[i // 2] if max_marks and i // 2 < len(max_marks) else 0,
             "expected_keywords": [],
             "penalties": {},
             "bonus": {},

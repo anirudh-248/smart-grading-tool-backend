@@ -3,7 +3,7 @@ import logging
 import pdfplumber
 from typing import List
 from . import engine
-
+from .ocr import process_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +24,7 @@ def run_evaluation(schema_pdf: str, student_pdf: str, max_marks: List[int] = Non
     logger.info(f"Running evaluation for student: {student_pdf}, schema: {schema_pdf}")
     
     schema_text = extract_pdf_text(schema_pdf)
-    student_text = extract_pdf_text(student_pdf)
-    
+    student_text = process_pdf(student_pdf)
     model_answers, rubric = engine.parse_schema(schema_text, max_marks)
     student_answers = engine.parse_student_answers(student_text)
     

@@ -26,4 +26,3 @@ pyyaml
 numpy
 tqdm
 pdfplumber
-reportlab

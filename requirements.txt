@@ -12,6 +12,7 @@ requests
 resend
 tenacity
 redis
+boto3
 
 sentence-transformers
 transformers

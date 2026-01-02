@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status, File, UploadFile
 from typing import Optional
 from app.db.prisma_client import get_prisma
 from app.redis.redis_client import redis_handler
-from app.cloud.gcp.storage import upload_file_to_gcs, delete_file_from_gcs
+from app.cloud.aws.storage import upload_file_to_s3, delete_file_from_s3
 from app.utils.success_handler import success_response
 from app.api.v1.user.auth.routes.user import get_current_user
 from prisma import Prisma
@@ -92,9 +92,9 @@ async def update_user(
             data["phone_number"] = None
 
         if delete_profile_pic:
-            await delete_file_from_gcs(
+            await delete_file_from_s3(
                 file_url=current_user.profile_pic,
-                bucket_name=env.GOOGLE_STORAGE_MEDIA_BUCKET
+                bucket_name=env.AWS_MEDIA_BUCKET
             )
             data["profile_pic"] = None
 
@@ -104,9 +104,9 @@ async def update_user(
         if profile_pic:
             file_name = profile_pic.filename
             file_content = await profile_pic.read()
-            file_url = await upload_file_to_gcs(
+            file_url = await upload_file_to_s3(
                 file=file_content,
-                bucket_name=env.GOOGLE_STORAGE_MEDIA_BUCKET,
+                bucket_name=env.AWS_MEDIA_BUCKET,
                 folder_name="user-profile-pics",
                 content_type=profile_pic.content_type,
                 filename=file_name
